@@ -1,14 +1,21 @@
 package pl.javastart.weatherapi;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import pl.javastart.zadanie31.CityNotFoundException;
 import pl.javastart.zadanie31.NoConnectionException;
 import pl.javastart.zadanie31.WeatherDisplayDto;
 
+import java.net.UnknownHostException;
+
 @Service
 public class WeatherApiService {
-    private final String openWeatherApiKey = "407fb443f6946a53f2123b6791efde13";
+    private final String openWeatherApiKey;
+
+    public WeatherApiService(@Value("${app.weatherapi.key}") String openWeatherApiKey) {
+        this.openWeatherApiKey = openWeatherApiKey;
+    }
 
     public WeatherDisplayDto getWeatherInCity(String city) {
         try {
@@ -19,7 +26,7 @@ public class WeatherApiService {
             return weatherToDisplayMapper(apiResponse);
 
         } catch (Exception e) {
-            if (e instanceof NoConnectionException) {
+            if (e.getCause() instanceof UnknownHostException) {
                 throw new NoConnectionException();
             } else {
              throw new CityNotFoundException();
@@ -28,7 +35,6 @@ public class WeatherApiService {
     }
 
     private WeatherDisplayDto weatherToDisplayMapper(WeatherApiResponseDto weatherApiResponseDto) {
-        if (weatherApiResponseDto != null) {
             String cityName = (weatherApiResponseDto.getName());
             int visibility = (weatherApiResponseDto.getVisibility());
             double temperature = weatherApiResponseDto.getMain().getTemp();
@@ -37,8 +43,5 @@ public class WeatherApiService {
             double windSpeed = (weatherApiResponseDto.getWind().getSpeed());
             WeatherDisplayDto weatherDisplayDto = new WeatherDisplayDto(cityName, temperature, humidity, pressure, visibility, windSpeed);
             return weatherDisplayDto;
-        } else {
-            throw new NoConnectionException();
-        }
     }
 }
